@@ -115,7 +115,7 @@
       flex: 1 1 auto;
       flex-wrap: wrap;
     }
-    .neon-clock, .weather {
+    .neon-clock, .weather, .wind-widget {
       display: flex;
       align-items: center;
       gap: .55rem;
@@ -126,6 +126,87 @@
       background: var(--widget-bg);
       -webkit-backdrop-filter: blur(10px);
       backdrop-filter: blur(10px);
+    }
+    .wind-widget {
+      min-height: 64px;
+      padding: .25rem .65rem .25rem .35rem;
+      gap: .5rem;
+    }
+    .wind-compass {
+      position: relative;
+      flex: 0 0 58px;
+      width: 58px;
+      height: 58px;
+      border: 1px solid color-mix(in srgb, var(--neon) 70%, var(--border));
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at center, transparent 0 43%, rgba(34, 211, 238, .08) 44% 45%, transparent 46%),
+        radial-gradient(circle at center, var(--widget-bg), color-mix(in srgb, var(--accent-soft) 65%, var(--widget-bg)));
+      box-shadow: 0 0 10px rgba(34, 211, 238, .18), inset 0 0 12px rgba(34, 211, 238, .1);
+      font-size: .52rem;
+      font-weight: 850;
+      line-height: 1;
+      text-shadow: 0 0 5px rgba(34, 211, 238, .35);
+    }
+    .compass-mark { position: absolute; color: var(--muted); }
+    .compass-mark--n { top: 4px; left: 50%; color: var(--neon); transform: translateX(-50%); }
+    .compass-mark--e { top: 50%; right: 4px; transform: translateY(-50%); }
+    .compass-mark--s { bottom: 4px; left: 50%; transform: translateX(-50%); }
+    .compass-mark--w { top: 50%; left: 4px; transform: translateY(-50%); }
+    .wind-needle {
+      position: absolute;
+      z-index: 1;
+      top: 50%;
+      left: 50%;
+      width: 2px;
+      height: 23px;
+      border-radius: 999px;
+      background: linear-gradient(to top, var(--neon-hot), var(--neon));
+      box-shadow: 0 0 5px var(--neon), 0 0 10px rgba(34, 211, 238, .7);
+      transform: translate(-50%, -100%) rotate(var(--wind-angle, 0deg));
+      transform-origin: 50% 100%;
+      transition: transform .45s ease, opacity .25s ease;
+    }
+    .wind-needle::before {
+      position: absolute;
+      top: -4px;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-right: 4px solid transparent;
+      border-bottom: 8px solid var(--neon);
+      border-left: 4px solid transparent;
+      content: "";
+      transform: translateX(-50%);
+      filter: drop-shadow(0 0 3px var(--neon));
+    }
+    .wind-needle.is-hidden { opacity: 0; }
+    .compass-center {
+      position: absolute;
+      z-index: 2;
+      top: 50%;
+      left: 50%;
+      width: 7px;
+      height: 7px;
+      border: 1px solid var(--widget-bg);
+      border-radius: 50%;
+      background: var(--neon-hot);
+      box-shadow: 0 0 6px var(--neon-hot);
+      transform: translate(-50%, -50%);
+    }
+    .wind-body { display: flex; flex-direction: column; gap: .08rem; min-width: 0; }
+    .wind-label {
+      color: var(--text);
+      font-size: .82rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .wind-speed {
+      color: var(--muted);
+      font-size: .67rem;
+      font-weight: 650;
+      white-space: nowrap;
     }
     .neon-clock {
       font-variant-numeric: tabular-nums;
@@ -358,7 +439,7 @@
       .topbar { min-height: auto; padding-block: .65rem; }
       .brand { width: 100%; }
       .widgets { width: 100%; justify-content: space-between; }
-      .neon-clock, .weather { flex: 1 1 auto; }
+      .neon-clock, .weather, .wind-widget { flex: 1 1 auto; }
       .ticker { grid-template-columns: 1fr; }
       .ticker-label {
         border-right: 0;
@@ -403,6 +484,20 @@
           <div class="weather-body">
             <div class="weather-temp" id="weather-temp">Loading…</div>
             <div class="weather-meta" id="weather-meta">KSGU weather</div>
+          </div>
+        </div>
+        <div class="wind-widget" title="KSGU wind direction">
+          <div class="wind-compass" id="wind-compass" role="img" aria-label="KSGU wind unavailable">
+            <span class="compass-mark compass-mark--n" aria-hidden="true">N</span>
+            <span class="compass-mark compass-mark--e" aria-hidden="true">E</span>
+            <span class="compass-mark compass-mark--s" aria-hidden="true">S</span>
+            <span class="compass-mark compass-mark--w" aria-hidden="true">W</span>
+            <span class="wind-needle is-hidden" id="wind-needle" aria-hidden="true"></span>
+            <span class="compass-center" aria-hidden="true"></span>
+          </div>
+          <div class="wind-body" aria-live="polite">
+            <div class="wind-label" id="wind-label">—</div>
+            <div class="wind-speed" id="wind-speed">KSGU wind · —</div>
           </div>
         </div>
         <button class="button" id="theme-toggle" type="button" aria-label="Switch to dark mode" title="Switch theme">
@@ -527,6 +622,47 @@
         if (c === "OVC") return ["Overcast", "☁️"];
         return ["KSGU", "✈️"];
       }
+
+      function updateCompass(wdir, windMph, gustMph) {
+        const compass = document.getElementById("wind-compass");
+        const needle = document.getElementById("wind-needle");
+        const labelEl = document.getElementById("wind-label");
+        const speedEl = document.getElementById("wind-speed");
+        const speedValue = Number(windMph);
+        const gustValue = Number(gustMph);
+        const speed = windMph != null && windMph !== "" && Number.isFinite(speedValue) ? Math.max(0, Math.round(speedValue)) : null;
+        const gust = gustMph != null && gustMph !== "" && Number.isFinite(gustValue) ? Math.max(0, Math.round(gustValue)) : null;
+        const rawDirection = typeof wdir === "string" ? wdir.trim().toUpperCase() : wdir;
+        const variable = rawDirection === "VRB";
+        const direction = Number(rawDirection);
+        const validDirection = Number.isFinite(direction) && direction >= 0 && direction <= 360;
+        const calm = !variable && speed === 0;
+        const offline = !variable && !validDirection && speed == null && gust == null;
+        const speedText = speed == null ? "—" : speed + " mph" + (gust ? " · G" + gust : "");
+
+        if (calm) {
+          labelEl.textContent = "Calm";
+          needle.classList.add("is-hidden");
+          compass.setAttribute("aria-label", "KSGU wind calm");
+        } else if (variable) {
+          labelEl.textContent = "VRB";
+          needle.classList.add("is-hidden");
+          compass.setAttribute("aria-label", "KSGU wind variable at " + (speed == null ? "unknown speed" : speed + " mph"));
+        } else if (validDirection) {
+          const degrees = Math.round(((direction % 360) + 360) % 360);
+          const cardinal = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"][Math.round(degrees / 45) % 8];
+          labelEl.textContent = degrees + "° " + cardinal;
+          needle.style.setProperty("--wind-angle", degrees + "deg");
+          needle.classList.remove("is-hidden");
+          compass.setAttribute("aria-label", "KSGU wind from " + degrees + " degrees" + (speed == null ? "" : " at " + speed + " mph"));
+        } else {
+          labelEl.textContent = "—";
+          needle.classList.add("is-hidden");
+          compass.setAttribute("aria-label", "KSGU wind unavailable");
+        }
+        speedEl.textContent = "KSGU wind · " + (offline ? "—" : speedText);
+      }
+
       async function loadWeather() {
         const tempEl = document.getElementById("weather-temp");
         const metaEl = document.getElementById("weather-meta");
@@ -540,6 +676,7 @@
           const tempF = Math.round((cur.temp * 9) / 5 + 32);
           const wind = cur.wspd != null ? Math.round(cur.wspd * 1.15078) : null; // kt -> mph
           const gust = cur.wgst != null ? Math.round(cur.wgst * 1.15078) : null;
+          updateCompass(cur.wdir, wind, gust);
           const [label, emoji] = coverEmoji(cur.cover);
           iconEl.textContent = emoji;
           tempEl.textContent = tempF + "°F";
@@ -548,16 +685,18 @@
           metaEl.textContent = label + " · " + windTxt + " · KSGU";
         } catch (_) {
           try {
-            const url = "https://api.open-meteo.com/v1/forecast?latitude=37.0364&longitude=-113.5103&current=temperature_2m,weather_code,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FDenver";
+            const url = "https://api.open-meteo.com/v1/forecast?latitude=37.0364&longitude=-113.5103&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FDenver";
             const res = await fetch(url);
             if (!res.ok) throw new Error("weather " + res.status);
             const data = await res.json();
             const cur = data.current;
+            updateCompass(cur.wind_direction_10m, cur.wind_speed_10m, null);
             const [label, emoji] = WMO[cur.weather_code] || ["Conditions", "🌡️"];
             iconEl.textContent = emoji;
             tempEl.textContent = Math.round(cur.temperature_2m) + "°F";
             metaEl.textContent = label + " · " + Math.round(cur.wind_speed_10m) + " mph · KSGU";
           } catch (__) {
+            updateCompass(null, null, null);
             iconEl.textContent = "🌡️";
             tempEl.textContent = "Weather offline";
             metaEl.textContent = "KSGU · retry later";

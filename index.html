@@ -21,6 +21,8 @@
       --neon: #22d3ee;
       --neon-hot: #a78bfa;
       --widget-bg: rgba(255, 255, 255, .78);
+      --ticker-chip: rgba(37, 99, 235, .08);
+      --ticker-sep: rgba(100, 116, 139, .35);
     }
 
     [data-theme="dark"] {
@@ -38,6 +40,8 @@
       --neon: #67e8f9;
       --neon-hot: #c4b5fd;
       --widget-bg: rgba(15, 23, 42, .82);
+      --ticker-chip: rgba(96, 165, 250, .12);
+      --ticker-sep: rgba(148, 163, 184, .35);
     }
 
     * { box-sizing: border-box; }
@@ -53,7 +57,7 @@
     }
     .app {
       display: grid;
-      grid-template-rows: auto minmax(0, 1fr) auto;
+      grid-template-rows: auto auto minmax(0, 1fr) auto auto;
       height: 100%;
       isolation: isolate;
     }
@@ -189,6 +193,131 @@
     .button:hover { border-color: var(--accent); background: var(--accent-soft); transform: translateY(-1px); }
     .button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
     .icon { width: 17px; height: 17px; }
+
+    /* —— OpenSky tickers —— */
+    .ticker {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: stretch;
+      gap: 0;
+      min-height: 36px;
+      border-bottom: 1px solid var(--border);
+      background: var(--chrome);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      backdrop-filter: blur(14px) saturate(140%);
+      overflow: hidden;
+    }
+    .ticker--departures { border-bottom: 0; border-top: 1px solid var(--border); }
+    .ticker-label {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: .08rem;
+      flex: 0 0 auto;
+      padding: .35rem .7rem .35rem .85rem;
+      border-right: 1px solid var(--border);
+      background: var(--accent-soft);
+      white-space: nowrap;
+    }
+    .ticker-label-main {
+      font-size: .68rem;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--accent);
+      line-height: 1.15;
+    }
+    .ticker-label-note {
+      font-size: .58rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: .02em;
+      max-width: 11.5rem;
+      white-space: normal;
+      line-height: 1.2;
+    }
+    .ticker-track-wrap {
+      position: relative;
+      min-width: 0;
+      overflow: hidden;
+      mask-image: linear-gradient(90deg, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+    }
+    .ticker-track {
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      width: max-content;
+      min-height: 100%;
+      padding: .3rem 0;
+      will-change: transform;
+      animation: ticker-scroll var(--ticker-duration, 40s) linear infinite;
+    }
+    .ticker:hover .ticker-track,
+    .ticker:focus-within .ticker-track {
+      animation-play-state: paused;
+    }
+    .ticker-track.is-static {
+      animation: none;
+      width: 100%;
+      justify-content: flex-start;
+      padding-left: .75rem;
+      padding-right: .75rem;
+    }
+    .ticker-item {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      margin: 0 .35rem;
+      padding: .22rem .65rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--ticker-chip);
+      font-size: .72rem;
+      font-weight: 650;
+      white-space:nowrap;
+      line-height: 1.2;
+    }
+    .ticker-call {
+      font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+      font-weight: 800;
+      letter-spacing: .04em;
+      color: var(--neon);
+      text-shadow: 0 0 8px rgba(34, 211, 238, .35);
+    }
+    [data-theme="dark"] .ticker-call {
+      text-shadow: 0 0 10px rgba(103, 232, 249, .55);
+    }
+    .ticker-route { color: var(--text); }
+    .ticker-route .arrow { color: var(--neon-hot); margin: 0 .2rem; font-weight: 800; }
+    .ticker-time {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      font-size: .68rem;
+      font-weight: 600;
+    }
+    .ticker-sep {
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      margin: 0 .15rem;
+      border-radius: 50%;
+      background: var(--ticker-sep);
+      flex: 0 0 auto;
+    }
+    .ticker-empty {
+      color: var(--muted);
+      font-size: .72rem;
+      font-weight: 650;
+      padding: .2rem 0;
+    }
+    @keyframes ticker-scroll {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
     .map-wrap { position: relative; min-height: 0; background: #dbe5ef; }
     iframe { display: block; width: 100%; height: 100%; border: 0; background: #dbe5ef; }
     .status-note {
@@ -230,9 +359,22 @@
       .brand { width: 100%; }
       .widgets { width: 100%; justify-content: space-between; }
       .neon-clock, .weather { flex: 1 1 auto; }
+      .ticker { grid-template-columns: 1fr; }
+      .ticker-label {
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+        padding: .3rem .75rem;
+        flex-direction: row;
+        align-items: baseline;
+        gap: .45rem;
+        flex-wrap: wrap;
+      }
+      .ticker-label-note { max-width: none; }
+      .ticker-item { font-size: .68rem; padding: .18rem .55rem; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+      .ticker-track { animation: none !important; }
     }
   </style>
 </head>
@@ -268,12 +410,38 @@
         </button>
       </div>
     </header>
+
+    <section class="ticker ticker--arrivals" aria-label="KSGU arrivals from OpenSky">
+      <div class="ticker-label">
+        <span class="ticker-label-main">KSGU Arrivals (OpenSky · recent)</span>
+        <span class="ticker-label-note">Approx. ADS-B · not official IFR</span>
+      </div>
+      <div class="ticker-track-wrap">
+        <div class="ticker-track is-static" id="arrivals-track" role="list">
+          <span class="ticker-empty">Loading arrivals…</span>
+        </div>
+      </div>
+    </section>
+
     <main class="map-wrap" aria-label="Live flight map">
       <iframe src="https://globe.adsbexchange.com/" title="Live flight tracking map from ADS-B Exchange" allow="fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>
       <div class="status-note" aria-hidden="true"><span class="status-dot"></span>Live map</div>
     </main>
+
+    <section class="ticker ticker--departures" aria-label="KSGU departures from OpenSky">
+      <div class="ticker-label">
+        <span class="ticker-label-main">KSGU Departures (OpenSky · recent)</span>
+        <span class="ticker-label-note">Approx. ADS-B · not official IFR</span>
+      </div>
+      <div class="ticker-track-wrap">
+        <div class="ticker-track is-static" id="departures-track" role="list">
+          <span class="ticker-empty">Loading departures…</span>
+        </div>
+      </div>
+    </section>
+
     <footer class="footer">
-      www.KSGU.Live · Map data by <a href="https://www.adsbexchange.com/" target="_blank" rel="noopener noreferrer">ADS-B Exchange</a> · Weather via Aviation Weather / Open-Meteo
+      www.KSGU.Live · Map data by <a href="https://www.adsbexchange.com/" target="_blank" rel="noopener noreferrer">ADS-B Exchange</a> · Traffic via OpenSky (approx.) · Weather via Aviation Weather / Open-Meteo
     </footer>
   </div>
   <script>
@@ -398,6 +566,202 @@
       }
       loadWeather();
       setInterval(loadWeather, 10 * 60 * 1000);
+
+      /* —— OpenSky arrivals / departures tickers —— */
+      const OPENSKY_POLL_MS = 150000; // ~2.5 min
+      const WINDOW_SEC = 8 * 3600;
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      function unixWindow() {
+        const now = Math.floor(Date.now() / 1000);
+        const dayStart = Math.floor(Date.UTC(
+          new Date().getUTCFullYear(),
+          new Date().getUTCMonth(),
+          new Date().getUTCDate()
+        ) / 1000);
+        const begin = Math.max(now - WINDOW_SEC, dayStart);
+        return { begin, end: now };
+      }
+
+      function airportCode(code) {
+        if (!code || typeof code !== "string") return "????";
+        const t = code.trim().toUpperCase();
+        return t || "????";
+      }
+
+      function flightId(f) {
+        const cs = (f.callsign || "").trim();
+        if (cs) return cs.toUpperCase();
+        return (f.icao24 || "????").toUpperCase();
+      }
+
+      function formatMtTime(unixSec) {
+        if (unixSec == null || !Number.isFinite(Number(unixSec))) return null;
+        const d = new Date(Number(unixSec) * 1000);
+        return new Intl.DateTimeFormat("en-US", {
+          timeZone: tz,
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        }).format(d) + " MT";
+      }
+
+      function normalizeFlights(data) {
+        if (!data) return [];
+        if (Array.isArray(data)) return data.filter(Boolean);
+        if (Array.isArray(data.flights)) return data.flights.filter(Boolean);
+        if (typeof data === "object") {
+          const vals = Object.values(data);
+          if (vals.length && vals.every((v) => v && typeof v === "object" && ("icao24" in v || "callsign" in v))) {
+            return vals;
+          }
+        }
+        return [];
+      }
+
+      async function fetchJsonVia(url) {
+        const res = await fetch(url, { cache: "no-store" });
+        if (res.status === 404) return [];
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const text = await res.text();
+        if (!text || !text.trim()) return [];
+        try {
+          return JSON.parse(text);
+        } catch (_) {
+          return [];
+        }
+      }
+
+      async function fetchOpenSky(kind) {
+        const { begin, end } = unixWindow();
+        const path = kind === "arrival" ? "arrival" : "departure";
+        const apiUrl =
+          "https://opensky-network.org/api/flights/" + path +
+          "?airport=KSGU&begin=" + begin + "&end=" + end;
+
+        const attempts = [
+          () => fetchJsonVia(apiUrl),
+          () => fetchJsonVia("https://corsproxy.io/?" + encodeURIComponent(apiUrl)),
+          async () => {
+            const raw = "https://api.allorigins.win/raw?url=" + encodeURIComponent(apiUrl);
+            return fetchJsonVia(raw);
+          },
+        ];
+
+        let lastErr = null;
+        for (const attempt of attempts) {
+          try {
+            const data = await attempt();
+            return normalizeFlights(data);
+          } catch (err) {
+            lastErr = err;
+          }
+        }
+        throw lastErr || new Error("OpenSky unavailable");
+      }
+
+      function itemHtml(f, kind) {
+        const id = flightId(f);
+        const dep = airportCode(f.estDepartureAirport);
+        const arr = airportCode(f.estArrivalAirport);
+        let route;
+        let when;
+        if (kind === "arrival") {
+          route = `<span class="ticker-route">${escapeHtml(dep)}<span class="arrow">→</span>KSGU</span>`;
+          when = formatMtTime(f.lastSeen != null ? f.lastSeen : f.firstSeen);
+        } else {
+          route = `<span class="ticker-route">KSGU<span class="arrow">→</span>${escapeHtml(arr)}</span>`;
+          when = formatMtTime(f.firstSeen != null ? f.firstSeen : f.lastSeen);
+        }
+        const timeBit = when
+          ? `<span class="ticker-sep" aria-hidden="true"></span><span class="ticker-time">${escapeHtml(when)}</span>`
+          : "";
+        return (
+          `<span class="ticker-item" role="listitem">` +
+          `<span class="ticker-call">${escapeHtml(id)}</span>` +
+          `<span class="ticker-sep" aria-hidden="true"></span>` +
+          route +
+          timeBit +
+          `</span>`
+        );
+      }
+
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function sortFlights(flights, kind) {
+        const key = kind === "arrival" ? "lastSeen" : "firstSeen";
+        return flights.slice().sort((a, b) => {
+          const av = Number(a[key] != null ? a[key] : a.firstSeen) || 0;
+          const bv = Number(b[key] != null ? b[key] : b.firstSeen) || 0;
+          return bv - av;
+        });
+      }
+
+      function renderTicker(trackEl, flights, kind, emptyMsg) {
+        if (!flights.length) {
+          trackEl.classList.add("is-static");
+          trackEl.style.removeProperty("--ticker-duration");
+          trackEl.innerHTML = `<span class="ticker-empty">${escapeHtml(emptyMsg)}</span>`;
+          return;
+        }
+
+        const sorted = sortFlights(flights, kind);
+        const chips = sorted.map((f) => itemHtml(f, kind)).join("");
+        const shouldScroll = !reducedMotion && sorted.length >= 1;
+
+        if (shouldScroll) {
+          // Duplicate for seamless loop; duration scales with item count
+          const duration = Math.max(28, Math.min(90, sorted.length * 7));
+          trackEl.classList.remove("is-static");
+          trackEl.style.setProperty("--ticker-duration", duration + "s");
+          trackEl.innerHTML = chips + chips;
+        } else {
+          trackEl.classList.add("is-static");
+          trackEl.style.removeProperty("--ticker-duration");
+          trackEl.innerHTML = chips;
+        }
+      }
+
+      const arrivalsTrack = document.getElementById("arrivals-track");
+      const departuresTrack = document.getElementById("departures-track");
+
+      async function refreshTickers() {
+        const results = await Promise.allSettled([
+          fetchOpenSky("arrival"),
+          fetchOpenSky("departure"),
+        ]);
+
+        if (results[0].status === "fulfilled") {
+          renderTicker(
+            arrivalsTrack,
+            results[0].value,
+            "arrival",
+            "No recent arrivals"
+          );
+        } else {
+          renderTicker(arrivalsTrack, [], "arrival", "OpenSky unavailable");
+        }
+
+        if (results[1].status === "fulfilled") {
+          renderTicker(
+            departuresTrack,
+            results[1].value,
+            "departure",
+            "No recent departures"
+          );
+        } else {
+          renderTicker(departuresTrack, [], "departure", "OpenSky unavailable");
+        }
+      }
+
+      refreshTickers();
+      setInterval(refreshTickers, OPENSKY_POLL_MS);
     })();
   </script>
 </body>

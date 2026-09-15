@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#f4f7fb" />
-  <title>Live Flight Tracker</title>
+  <meta name="theme-color" content="#0b1220" />
+  <title>www.KSGU.Live — Airport Tracking</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -18,12 +18,15 @@
       --accent: #2563eb;
       --accent-soft: rgba(37, 99, 235, .11);
       --focus: rgba(37, 99, 235, .28);
+      --neon: #22d3ee;
+      --neon-hot: #a78bfa;
+      --widget-bg: rgba(255, 255, 255, .78);
     }
 
     [data-theme="dark"] {
       color-scheme: dark;
       --page: #0b1220;
-      --chrome: rgba(15, 23, 42, .84);
+      --chrome: rgba(15, 23, 42, .9);
       --chrome-solid: #0f172a;
       --text: #e5edf9;
       --muted: #94a3b8;
@@ -32,6 +35,9 @@
       --accent: #60a5fa;
       --accent-soft: rgba(96, 165, 250, .13);
       --focus: rgba(96, 165, 250, .3);
+      --neon: #67e8f9;
+      --neon-hot: #c4b5fd;
+      --widget-bg: rgba(15, 23, 42, .82);
     }
 
     * { box-sizing: border-box; }
@@ -58,65 +64,130 @@
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
-      min-height: 68px;
-      padding: .75rem clamp(1rem, 3vw, 2rem);
+      min-height: 76px;
+      padding: .7rem clamp(.9rem, 2.5vw, 1.6rem);
       border-bottom: 1px solid var(--border);
       background: var(--chrome);
       box-shadow: var(--shadow);
       -webkit-backdrop-filter: blur(18px) saturate(150%);
       backdrop-filter: blur(18px) saturate(150%);
+      flex-wrap: wrap;
     }
     .brand { display: flex; align-items: center; gap: .75rem; min-width: 0; }
     .brand-mark {
       display: grid;
       flex: 0 0 auto;
       place-items: center;
-      width: 36px;
-      height: 36px;
-      border-radius: 11px;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
       color: white;
       background: linear-gradient(135deg, #2563eb, #14b8a6);
       box-shadow: 0 7px 18px rgba(37, 99, 235, .28);
     }
-    .brand-mark svg { width: 21px; height: 21px; }
+    .brand-mark svg { width: 22px; height: 22px; }
     h1 {
       margin: 0;
       overflow: hidden;
-      font-size: clamp(.95rem, 2vw, 1.08rem);
-      font-weight: 700;
+      font-size: clamp(1rem, 2.2vw, 1.25rem);
+      font-weight: 800;
       letter-spacing: -.02em;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
     .eyebrow {
-      margin: .16rem 0 0;
+      margin: .12rem 0 0;
+      color: var(--muted);
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    .widgets {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: .65rem;
+      flex: 1 1 auto;
+      flex-wrap: wrap;
+    }
+    .neon-clock, .weather {
+      display: flex;
+      align-items: center;
+      gap: .55rem;
+      min-height: 44px;
+      padding: .35rem .75rem;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--widget-bg);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+    }
+    .neon-clock {
+      font-variant-numeric: tabular-nums;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0;
+      padding: .4rem .9rem;
+    }
+    .neon-time {
+      font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+      font-size: clamp(1.05rem, 2.4vw, 1.45rem);
+      font-weight: 800;
+      letter-spacing: .06em;
+      color: var(--neon);
+      text-shadow:
+        0 0 6px rgba(34, 211, 238, .9),
+        0 0 14px rgba(34, 211, 238, .55),
+        0 0 28px rgba(167, 139, 250, .35);
+      line-height: 1.15;
+    }
+    [data-theme="dark"] .neon-time {
+      text-shadow:
+        0 0 8px rgba(103, 232, 249, 1),
+        0 0 18px rgba(103, 232, 249, .7),
+        0 0 36px rgba(196, 181, 253, .45);
+    }
+    .neon-date {
+      color: var(--muted);
+      font-size: .65rem;
+      font-weight: 650;
+      letter-spacing: .04em;
+    }
+    .weather-icon {
+      font-size: 1.35rem;
+      line-height: 1;
+      filter: drop-shadow(0 0 8px rgba(96, 165, 250, .35));
+    }
+    .weather-body { display: flex; flex-direction: column; gap: .05rem; min-width: 0; }
+    .weather-temp {
+      font-size: .95rem;
+      font-weight: 800;
+      letter-spacing: -.02em;
+      color: var(--text);
+    }
+    .weather-meta {
       color: var(--muted);
       font-size: .68rem;
       font-weight: 650;
-      letter-spacing: .12em;
-      text-transform: uppercase;
+      white-space: nowrap;
     }
-    .actions { display: flex; align-items: center; justify-content: flex-end; gap: .55rem; flex: 0 0 auto; }
-    .button, .external-link {
+    .button {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: .42rem;
+      width: 38px;
       min-height: 38px;
       border: 1px solid var(--border);
       border-radius: 10px;
       color: var(--text);
       background: var(--chrome-solid);
       font: inherit;
-      font-size: .8rem;
-      font-weight: 650;
-      text-decoration: none;
+      cursor: pointer;
       transition: border-color .2s ease, background .2s ease, transform .2s ease;
     }
-    .button { width: 38px; cursor: pointer; }
-    .external-link { padding: 0 .78rem; }
-    .button:hover, .external-link:hover { border-color: var(--accent); background: var(--accent-soft); transform: translateY(-1px); }
-    .button:focus-visible, .external-link:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+    .button:hover { border-color: var(--accent); background: var(--accent-soft); transform: translateY(-1px); }
+    .button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
     .icon { width: 17px; height: 17px; }
     .map-wrap { position: relative; min-height: 0; background: #dbe5ef; }
     iframe { display: block; width: 100%; height: 100%; border: 0; background: #dbe5ef; }
@@ -154,14 +225,11 @@
       text-align: center;
     }
     .footer a { color: var(--accent); font-weight: 650; }
-    @media (max-width: 560px) {
-      .topbar { min-height: 62px; padding-inline: .8rem; }
-      .brand { gap: .58rem; }
-      .brand-mark { width: 32px; height: 32px; border-radius: 9px; }
-      .brand-mark svg { width: 18px; height: 18px; }
-      .external-link { padding-inline: .62rem; }
-      .external-link span { display: none; }
-      .status-note { right: .6rem; bottom: .6rem; }
+    @media (max-width: 720px) {
+      .topbar { min-height: auto; padding-block: .65rem; }
+      .brand { width: 100%; }
+      .widgets { width: 100%; justify-content: space-between; }
+      .neon-clock, .weather { flex: 1 1 auto; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
@@ -179,26 +247,33 @@
           </svg>
         </div>
         <div>
-          <h1>Live Flight Tracker</h1>
-          <p class="eyebrow">Real-time air traffic</p>
+          <h1>www.KSGU.Live</h1>
+          <p class="eyebrow">Airport tracking</p>
         </div>
       </div>
-      <nav class="actions" aria-label="Tracker actions">
-        <a class="external-link" href="https://globe.adsbexchange.com/" target="_blank" rel="noopener noreferrer">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
-          <span>Open on ADS-B Exchange</span>
-        </a>
+      <div class="widgets">
+        <div class="neon-clock" aria-live="polite">
+          <div class="neon-time" id="neon-time">--:--:--</div>
+          <div class="neon-date" id="neon-date">Local time</div>
+        </div>
+        <div class="weather" id="weather" title="St. George Regional Airport (KSGU)">
+          <div class="weather-icon" id="weather-icon" aria-hidden="true">…</div>
+          <div class="weather-body">
+            <div class="weather-temp" id="weather-temp">Loading…</div>
+            <div class="weather-meta" id="weather-meta">KSGU weather</div>
+          </div>
+        </div>
         <button class="button" id="theme-toggle" type="button" aria-label="Switch to dark mode" title="Switch theme">
           <svg class="icon" id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>
         </button>
-      </nav>
+      </div>
     </header>
     <main class="map-wrap" aria-label="Live flight map">
       <iframe src="https://globe.adsbexchange.com/" title="Live flight tracking map from ADS-B Exchange" allow="fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>
       <div class="status-note" aria-hidden="true"><span class="status-dot"></span>Live map</div>
     </main>
     <footer class="footer">
-      Embedded wrapper · Live data and map UI by <a href="https://www.adsbexchange.com/" target="_blank" rel="noopener noreferrer">ADS-B Exchange</a>
+      www.KSGU.Live · Map data by <a href="https://www.adsbexchange.com/" target="_blank" rel="noopener noreferrer">ADS-B Exchange</a> · Weather via Aviation Weather / Open-Meteo
     </footer>
   </div>
   <script>
@@ -214,7 +289,7 @@
       try { saved = localStorage.getItem(storageKey); } catch (_) {}
       const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
       let theme = saved === "dark" || saved === "light" ? saved : (systemDark ? "dark" : "light");
-      function render() {
+      function renderTheme() {
         const dark = theme === "dark";
         root.dataset.theme = theme;
         icon.innerHTML = dark ? sun : moon;
@@ -225,9 +300,104 @@
       toggle.addEventListener("click", () => {
         theme = theme === "dark" ? "light" : "dark";
         try { localStorage.setItem(storageKey, theme); } catch (_) {}
-        render();
+        renderTheme();
       });
-      render();
+      renderTheme();
+
+      const timeEl = document.getElementById("neon-time");
+      const dateEl = document.getElementById("neon-date");
+      const tz = "America/Denver";
+      function tickClock() {
+        const now = new Date();
+        timeEl.textContent = new Intl.DateTimeFormat("en-US", {
+          timeZone: tz,
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+        }).format(now);
+        dateEl.textContent = new Intl.DateTimeFormat("en-US", {
+          timeZone: tz,
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+        }).format(now) + " · MT";
+      }
+      tickClock();
+      setInterval(tickClock, 1000);
+
+      const WMO = {
+        0: ["Clear", "☀️"],
+        1: ["Mainly clear", "🌤️"],
+        2: ["Partly cloudy", "⛅"],
+        3: ["Overcast", "☁️"],
+        45: ["Fog", "🌫️"],
+        48: ["Rime fog", "🌫️"],
+        51: ["Light drizzle", "🌦️"],
+        53: ["Drizzle", "🌦️"],
+        55: ["Heavy drizzle", "🌧️"],
+        61: ["Light rain", "🌧️"],
+        63: ["Rain", "🌧️"],
+        65: ["Heavy rain", "🌧️"],
+        71: ["Light snow", "🌨️"],
+        73: ["Snow", "❄️"],
+        75: ["Heavy snow", "❄️"],
+        80: ["Rain showers", "🌦️"],
+        81: ["Rain showers", "🌧️"],
+        82: ["Heavy showers", "🌧️"],
+        95: ["Thunderstorm", "⛈️"],
+        96: ["Thunderstorm", "⛈️"],
+        99: ["Thunderstorm", "⛈️"],
+      };
+
+      function coverEmoji(cover) {
+        const c = (cover || "").toUpperCase();
+        if (c === "CLR" || c === "SKC") return ["Clear", "☀️"];
+        if (c === "FEW") return ["Few clouds", "🌤️"];
+        if (c === "SCT") return ["Scattered", "⛅"];
+        if (c === "BKN") return ["Broken clouds", "🌥️"];
+        if (c === "OVC") return ["Overcast", "☁️"];
+        return ["KSGU", "✈️"];
+      }
+      async function loadWeather() {
+        const tempEl = document.getElementById("weather-temp");
+        const metaEl = document.getElementById("weather-meta");
+        const iconEl = document.getElementById("weather-icon");
+        try {
+          const res = await fetch("https://aviationweather.gov/api/data/metar?ids=KSGU&format=json");
+          if (!res.ok) throw new Error("metar " + res.status);
+          const rows = await res.json();
+          const cur = rows && rows[0];
+          if (!cur) throw new Error("empty metar");
+          const tempF = Math.round((cur.temp * 9) / 5 + 32);
+          const wind = cur.wspd != null ? Math.round(cur.wspd * 1.15078) : null; // kt -> mph
+          const gust = cur.wgst != null ? Math.round(cur.wgst * 1.15078) : null;
+          const [label, emoji] = coverEmoji(cur.cover);
+          iconEl.textContent = emoji;
+          tempEl.textContent = tempF + "°F";
+          let windTxt = wind == null ? "calm" : wind + " mph";
+          if (gust) windTxt += " G" + gust;
+          metaEl.textContent = label + " · " + windTxt + " · KSGU";
+        } catch (_) {
+          try {
+            const url = "https://api.open-meteo.com/v1/forecast?latitude=37.0364&longitude=-113.5103&current=temperature_2m,weather_code,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FDenver";
+            const res = await fetch(url);
+            if (!res.ok) throw new Error("weather " + res.status);
+            const data = await res.json();
+            const cur = data.current;
+            const [label, emoji] = WMO[cur.weather_code] || ["Conditions", "🌡️"];
+            iconEl.textContent = emoji;
+            tempEl.textContent = Math.round(cur.temperature_2m) + "°F";
+            metaEl.textContent = label + " · " + Math.round(cur.wind_speed_10m) + " mph · KSGU";
+          } catch (__) {
+            iconEl.textContent = "🌡️";
+            tempEl.textContent = "Weather offline";
+            metaEl.textContent = "KSGU · retry later";
+          }
+        }
+      }
+      loadWeather();
+      setInterval(loadWeather, 10 * 60 * 1000);
     })();
   </script>
 </body>
